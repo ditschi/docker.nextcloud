@@ -29,7 +29,11 @@ services:
     command: redis-server --requirepass ${REDIS_PASSWORD}
 
   app:
-    image: nextcloud
+    image: nextcloud-plus
+    build:
+      context: ./docker
+      args:
+        baseImage: nextcloud:latest
     container_name: nextcloud-app
     restart: unless-stopped
     depends_on:
@@ -70,4 +74,3 @@ networks:
   nextcloud:
   traefik:
     external: true
-
