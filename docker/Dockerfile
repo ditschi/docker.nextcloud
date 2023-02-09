@@ -1,6 +1,6 @@
 ARG baseImage=nextcloud
 
-FROM $baseImage as nexttcloud-plus
+FROM $baseImage as nextcloud-plus
 
 RUN apt-get update \
     && apt-get install -y \

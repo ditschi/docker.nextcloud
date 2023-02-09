@@ -28,34 +28,41 @@ services:
     restart: unless-stopped
     command: redis-server --requirepass ${REDIS_PASSWORD}
 
-  collabora:
-    image: collabora/code
-    container_name: nextcloud-collabora
-    hostname: collabora
-    networks:
-      - traefik
-      - nextcloud
-    cap_add:
-      - MKNOD
-    environment:
-      - domain=cloud.ditschers.de
-      - username=$COLLABORA_USER
-      - password=$COLLABORA_PASSWORD
-      - "extra_params=--o:ssl.enable=false --o:ssl.termination=true"
-    restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.collabora.entrypoints=web"
-      - "traefik.http.routers.collabora.rule=Host(`collabora.vps.ditschers.de`)"
-      - "traefik.http.routers.collabora.middlewares=https-redirect@file"
-      - "traefik.http.routers.collabora-secure.entrypoints=websecure"
-      - "traefik.http.routers.collabora-secure.rule=Host(`collabora.vps.ditschers.de`)"
-      - "traefik.http.routers.collabora-secure.tls=true"
-      - "traefik.http.routers.collabora-secure.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.collabora-secure.service=collabora"
-      - "traefik.http.services.collabora.loadbalancer.server.port=9980"
-      - "traefik.docker.network=traefik"
-      - "traefik.http.routers.collabora-secure.middlewares=secHeaders@file"
+  # collabora:
+  #   image: collabora/code
+  #   container_name: nextcloud-collabora
+  #   hostname: collabora
+  #   networks:
+  #     - traefik
+  #     - nextcloud
+  #   cap_add:
+  #     - MKNOD
+  #   expose:
+  #     - "9980"
+  #   privileged: true
+  #   environment:
+  #     - domain=(.*\.ditschers\.de|.*\.ditscher\.me)
+  #     - username=$COLLABORA_USER
+  #     - password=$COLLABORA_PASSWORD
+  #     - "extra_params=--o:ssl.enable=false --o:ssl.termination=true"
+  #     - dictionaries=en_US,de_DE
+  #     # - VIRTUAL_PROTO=http
+  #     # - VIRTUAL_PORT=9980
+  #     # - VIRTUAL_HOST=${COLLABORA_DOMAIN}
+  #   restart: unless-stopped
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.docker.network=traefik"
+  #     - "traefik.http.routers.collabora.entrypoints=web"
+  #     - "traefik.http.routers.collabora.rule=Host(`$COLLABORA_DOMAIN`)"
+  #     - "traefik.http.routers.collabora.middlewares=https-redirect@file"
+  #     - "traefik.http.routers.collabora-secure.entrypoints=websecure"
+  #     - "traefik.http.routers.collabora-secure.rule=Host(`$COLLABORA_DOMAIN`)"
+  #     - "traefik.http.routers.collabora-secure.tls=true"
+  #     - "traefik.http.routers.collabora-secure.tls.certresolver=letsencrypt"
+  #     - "traefik.http.routers.collabora-secure.service=collabora"
+  #     - "traefik.http.services.collabora.loadbalancer.server.port=9980"
+  #     - "traefik.http.routers.collabora-secure.middlewares=secHeaders@file"
 
   app:
     image: nextcloud-plus
@@ -79,22 +86,18 @@ services:
       - ./data/app:/var/www/html
       - ./data/data:/var/www/html/data
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.nextcloud-app.entrypoints=web"
-#      - "traefik.http.routers.nextcloud-app.rule=Host(`cloud.ditscher.me`, `cloud.ditschers.de`, `newcloud.ditschers.de`, `cloud.vps.ditscher.me`, `cloud.vps.ditschers.de`, `newcloud.vps.ditschers.de`)"
-      - "traefik.http.routers.nextcloud-app.rule=Host(`cloud.ditschers.de`, `newcloud.ditschers.de`, `cloud.vps.ditschers.de`, `newcloud.vps.ditschers.de`)"
-      - "traefik.http.routers.nextcloud-app.middlewares=https-redirect@file"
-      - "traefik.http.routers.nextcloud-app-secure.entrypoints=websecure"
-#      - "traefik.http.routers.nextcloud-app-secure.rule=Host(`cloud.ditscher.me`, `cloud.ditschers.de`, `newcloud.ditschers.de`, `cloud.vps.ditscher.me`, `cloud.vps.ditschers.de`, `newcloud.vps.ditschers.de`)"
-      - "traefik.http.routers.nextcloud-app-secure.rule=Host(`cloud.ditschers.de`, `newcloud.ditschers.de`, `cloud.vps.ditschers.de`, `newcloud.vps.ditschers.de`)"
-      - "traefik.http.routers.nextcloud-app-secure.tls=true"
-      - "traefik.http.routers.nextcloud-app-secure.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.nextcloud-app-secure.service=nextcloud-app"
-      - "traefik.http.services.nextcloud-app.loadbalancer.server.port=80"
-      - "traefik.docker.network=traefik"
-      - "traefik.http.routers.nextcloud-app-secure.middlewares=nextcloud-dav,secHeaders@file"
-      - "traefik.http.middlewares.nextcloud-dav.replacepathregex.regex=^/.well-known/ca(l|rd)dav"
-      - "traefik.http.middlewares.nextcloud-dav.replacepathregex.replacement=/remote.php/dav/"
+      - traefik.enable=true
+      - traefik.docker.network=traefik
+
+      - traefik.http.routers.nextcloud-app-secure.entrypoints=websecure
+      - traefik.http.routers.nextcloud-app-secure.rule=Host(`cloud.ditscher.me`, `cloud.ditschers.de`, `cloud.vps.ditscher.me`, `cloud.vps.ditschers.de`)
+      - traefik.http.routers.nextcloud-app-secure.tls=true
+      - traefik.http.routers.nextcloud-app-secure.tls.certresolver=letsencrypt
+      - traefik.http.routers.nextcloud-app-secure.service=nextcloud-app
+      - traefik.http.services.nextcloud-app.loadbalancer.server.port=80
+      - traefik.http.routers.nextcloud-app-secure.middlewares=nextcloud-dav
+      - traefik.http.middlewares.nextcloud-dav.replacepathregex.regex=^/.well-known/ca(l|rd)dav
+      - traefik.http.middlewares.nextcloud-dav.replacepathregex.replacement=/remote.php/dav/
     networks:
       - traefik
       - nextcloud
